@@ -20,10 +20,10 @@ public:
         char errorBuf[errorBufSize];
         // Then an SSL CTX object is created as a framwork to establish TLS/SSL enabled connections.
         ctx_ = decltype(ctx_) (SSL_CTX_new(method), SSL_CTX_free);
-        if (nullptr == ctx_) throw std::runtime_error (ERR_error_string(ERR_get_error(), errorBuf));
+        if (ctx_ == nullptr) throw std::runtime_error (ERR_error_string(ERR_get_error(), errorBuf));
         //Create SSL struct that hold data for the connection.ssl = declitype
         ssl_ = decltype(ssl_)(SSL_new(ctx_.get()), SSL_free);
-        if (nullptr == ssl_) throw std::runtime_error (ERR_error_string(ERR_get_error(), errorBuf));
+        if (ssl_ == nullptr) throw std::runtime_error (ERR_error_string(ERR_get_error(), errorBuf));
         // When a network connection has been created, it can be assigned to an SSL object.
         // After the SSL object has been created using SSL new,
         // SSL set fd or SSL set bio can be used to associate the network connection with the object.
@@ -34,11 +34,11 @@ public:
 
         // Then TLS/SSL handshake is performed using SSL accept or SSL connect respectively.
         const int rstConnect = SSL_connect(ssl_.get() );
-        if ( 0 == rstConnect )
+        if (rstConnect == 0)
         {
             throw std::runtime_error ( "handshake failed.");
         }
-        else if ( 0 > rstConnect )
+        else if (rstConnect < 0)
         {
             throw std::runtime_error ( "handshake and shutdown failed.");
         }
@@ -48,11 +48,11 @@ public:
     {
         // SSL read and SSL write are used to read and write data on the TLS/SSL connection.
         const int rstWrite = SSL_write(ssl_.get(), msg.c_str(), msg.length() );
-        if ( 0 == rstWrite )
+        if (rstWrite == 0)
         {
             throw std::runtime_error("socket write failed due to lose connection." );
         }
-        else if ( 0 > rstWrite )
+        else if ( rstWrite < 0)
         {
             throw std::runtime_error ( "socket write failed due to unknown reason." );
         }
@@ -67,8 +67,8 @@ public:
         while (true)
         {
 	        const int rstRead = SSL_read (ssl_.get(), buf, readBufSize);
-	        if ( 0 == rstRead) throw std::runtime_error("Connection lost while read.");
-	        if ( 0 > rstRead && SSL_ERROR_WANT_READ == SSL_get_error(ssl_.get(), rstRead)) continue;
+	        if (rstRead == 0) throw std::runtime_error("Connection lost while read.");
+	        if (rstRead < 0 && SSL_ERROR_WANT_READ == SSL_get_error(ssl_.get(), rstRead)) continue;
 	        read += std::string(buf, buf + rstRead);
         	if (isDoneReceiving (read)) return read;
         }
@@ -78,11 +78,11 @@ public:
 	{
         // SSL shutdown can be used to shut down the TLS/SSL connection.
         int rstShutdown = SSL_shutdown(ssl_.get());
-        if ( 0 == rstShutdown )
+        if (rstShutdown == 0)
         {
             rstShutdown = SSL_shutdown(ssl_.get());
         }
-        else if ( -1 == rstShutdown && SSL_RECEIVED_SHUTDOWN == SSL_get_shutdown(ssl_.get()))
+        else if (rstShutdown == -1 && SSL_RECEIVED_SHUTDOWN == SSL_get_shutdown(ssl_.get()))
         {
             //uh strange thing below ;(
             //throw std::runtime_error( "shutdown failed." );
