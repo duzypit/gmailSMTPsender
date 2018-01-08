@@ -8,7 +8,9 @@
 #include <string>
 //#include <boost/archive/iterators/base64_from_binary.hpp>
 //#include <boost/archive/iterators/transform_width.hpp>
-#include "socket.cpp"
+//#include "socket.cpp"
+#include "practicalSocket.h"
+#include "practicalSocket.cpp"
 #include "base64.h"
 
 class MySMTP
@@ -25,7 +27,7 @@ public:
     {
         static const std::string newline = "\r\n";
         Socket socket(server, port);
-        MyOpenSSL openSSL (socket.GetSocket()->native ());
+        MyOpenSSL openSSL (socket.GetSocket()->nativeHandle());
         // http:en.wikipedia.org/wiki/Simple Mail Transfer ProtocolitSMTP transport example
         //std::cout << openSSL.Read (ReceiveFunctor (220));// 220 mx. google.com ESMTP
         openSSL.Write(std::string("EHLO ") + server + newline);
