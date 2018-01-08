@@ -2,16 +2,16 @@
 #include <string>
 #include <stdint.h>
 #include <stdexcept>
-#include <boost/asio.hpp>
-#include <boost/archive/iterators/base64_from_binary.hpp>
-#include <boost/archive/iterators/transform_width.hpp>
+//#include <boost/asio.hpp>
+//#include <boost/archive/iterators/base64_from_binary.hpp>
+//#include <boost/archive/iterators/transform_width.hpp>
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 
-#include "socket.cpp"
-#include "myopenssl.cpp"
-#include "mysmtp.cpp"
-#include "passwd.cpp"
+#include "include/socket.cpp"
+#include "include/myopenssl.cpp"
+#include "include/mysmtp.cpp"
+#include "include/passwd.cpp"
 
 
 int main ()
