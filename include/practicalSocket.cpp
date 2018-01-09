@@ -18,7 +18,7 @@
 
 #include "practicalSocket.h"
 #include <cstring>
-#include <functional> //std::ref
+#include <functional>
 
 #ifdef WIN32
   #include <winsock.h>         // For socket(), connect(), send(), and recv()
