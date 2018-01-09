@@ -6,17 +6,17 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <memory>
+#include <iostream>
 
-class MyOpenSSL
+
+class OpenSSLBearer
 {
-    std::unique_ptr<SSL_CTX, decltype (SSL_CTX_free)*> ctx_;
-    std::unique_ptr<SSL, decltype (SSL_free)*> ssl_;
-    enum { errorBufSize = 256, readBufSize = 256};	// may need to increase these sizes.
-
 public:
     // method can be one of SSLv2 method, SSLv3 method, TLSvl method or SSLv23 method.
-    MyOpenSSL(int socket, const SSL_METHOD *method = SSLv23_method() ) : ctx_ (nullptr, SSL_CTX_free), ssl_ (nullptr, SSL_free)
+    OpenSSLBearer(int socket, const SSL_METHOD *method = SSLv23_method() ) : ctx_ (nullptr, SSL_CTX_free), ssl_ (nullptr, SSL_free)
     {
+        initialize();
+        std::cout << "OpenSSLBearer initialized" << std::endl;
         char errorBuf[errorBufSize];
         // Then an SSL CTX object is created as a framwork to establish TLS/SSL enabled connections.
         ctx_ = decltype(ctx_) (SSL_CTX_new(method), SSL_CTX_free);
@@ -36,11 +36,12 @@ public:
         const int rstConnect = SSL_connect(ssl_.get() );
         if (rstConnect == 0)
         {
-            throw std::runtime_error ( "handshake failed.");
+            throw std::runtime_error (ERR_error_string(ERR_get_error(), errorBuf));
+//("handshake failed.");
         }
         else if (rstConnect < 0)
         {
-            throw std::runtime_error ( "handshake and shutdown failed.");
+            throw std::runtime_error ("OpenSSLBearer: handshake and shutdown failed.");
         }
     }
 
@@ -50,11 +51,11 @@ public:
         const int rstWrite = SSL_write(ssl_.get(), msg.c_str(), msg.length() );
         if (rstWrite == 0)
         {
-            throw std::runtime_error("socket write failed due to lose connection." );
+            throw std::runtime_error("OpenSSLBearer: socket write failed due to lose connection.");
         }
         else if ( rstWrite < 0)
         {
-            throw std::runtime_error ( "socket write failed due to unknown reason." );
+            throw std::runtime_error ("OpenSSLBearer: socket write failed due to unknown reason.");
         }
     }
 
@@ -74,10 +75,12 @@ public:
         }
     }
 
-    ~MyOpenSSL ()
+    ~OpenSSLBearer()
 	{
         // SSL shutdown can be used to shut down the TLS/SSL connection.
-        int rstShutdown = SSL_shutdown(ssl_.get());
+       // int rstShutdown =
+       SSL_shutdown(ssl_.get());
+/*
         if (rstShutdown == 0)
         {
             rstShutdown = SSL_shutdown(ssl_.get());
@@ -85,24 +88,29 @@ public:
         else if (rstShutdown == -1 && SSL_RECEIVED_SHUTDOWN == SSL_get_shutdown(ssl_.get()))
         {
             //uh strange thing below ;(
+            //throwing from destructor leads to undefined behavior
             //throw std::runtime_error( "shutdown failed." );
 
 	    }
+*/
+        ERR_free_strings();
+
     }
 
-    struct StaticInitialize
+private:
+    void initialize()
     {
-        StaticInitialize()
-	    {
-            // At first the library must be initialized
-            ERR_load_crypto_strings();
-            SSL_load_error_strings();
-	        SSL_library_init();
-        }
-	    ~StaticInitialize()
-        {
-            ERR_free_strings ();
-        }
-    };
+        ERR_load_crypto_strings();
+        SSL_load_error_strings();
+        SSL_library_init();
+    }
+
+    std::unique_ptr<SSL_CTX, decltype (SSL_CTX_free)*> ctx_;
+    std::unique_ptr<SSL, decltype (SSL_free)*> ssl_;
+    enum
+    {
+        errorBufSize = 256,
+        readBufSize = 256
+    };	// may need to increase these sizes.
 };
 #endif
