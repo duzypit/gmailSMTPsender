@@ -45,7 +45,7 @@ public:
         }
     }
 
-    void Write(const std::string& msg)
+    void write(const std::string& msg)
     {
         // SSL read and SSL write are used to read and write data on the TLS/SSL connection.
         const int rstWrite = SSL_write(ssl_.get(), msg.c_str(), msg.length() );
@@ -61,7 +61,7 @@ public:
 
 
     template <typename IsDoneReceivingFunctorType>
-    std::string Read (IsDoneReceivingFunctorType isDoneReceiving)
+    std::string read (IsDoneReceivingFunctorType isDoneReceiving)
     {
         char buf[readBufSize];
         std::string read;
@@ -78,21 +78,7 @@ public:
     ~OpenSSLBearer()
 	{
         // SSL shutdown can be used to shut down the TLS/SSL connection.
-       // int rstShutdown =
-       SSL_shutdown(ssl_.get());
-/*
-        if (rstShutdown == 0)
-        {
-            rstShutdown = SSL_shutdown(ssl_.get());
-        }
-        else if (rstShutdown == -1 && SSL_RECEIVED_SHUTDOWN == SSL_get_shutdown(ssl_.get()))
-        {
-            //uh strange thing below ;(
-            //throwing from destructor leads to undefined behavior
-            //throw std::runtime_error( "shutdown failed." );
-
-	    }
-*/
+        SSL_shutdown(ssl_.get());
         ERR_free_strings();
 
     }
