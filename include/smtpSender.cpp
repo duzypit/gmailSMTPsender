@@ -59,8 +59,8 @@ public:
         if (validReturnMsg(250, msg)) {
             std::cout << msg << std::endl;
         }
-        std::cout << "missing msg: " << std::endl;
-        std::cout << msg <<std::endl;
+        //std::cout << "missing msg: " << std::endl;
+        //std::cout << msg <<std::endl;
 
         openSSL.write (std::string("AUTH LOGIN") + newline);
         //std::cout << openSSL.read(ReceiveFunctor(334)); // 334
@@ -169,18 +169,27 @@ private:
         std::size_t codeLength = 3;
         std::string code;
         code = std::to_string(expectedCode);
+        bool repeat = true;
         if (code.length() != codeLength) throw std::runtime_error ("smtpSender: SMTP code must be three-digits.");
 
-        if (msg.length() < codeLength) return false;
+        while(repeat)
+        {
+            repeat = false;
+            if (msg.length() < codeLength) return false;
 
-        if (code != msg.substr(0, codeLength)) return false;
+            if (code != msg.substr(0, codeLength)) return false;
 
-        std::size_t posNewline = msg.find_first_of("\n", codeLength);
+            std::size_t posNewline = msg.find_first_of("\n", codeLength);
 
-        if (posNewline == std::string::npos) return false;
-        if (msg.at(codeLength) == ' ') return true;
-        //if (msg.at(codeLength) == '-') return this->operator()(msg.substr(posNewline + 1));
-        //    throw std::runtime_error ("smtpSender: Unexpected return code recieved.");
+            if (posNewline == std::string::npos) return false;
+            if (msg.at(codeLength) == ' ') return true;
+            if (msg.at(codeLength) == '-')
+            {
+                msg = msg.substr(posNewline + 1);
+                repeat = true;
+            }
+        }
+
         return false;
     }
 
