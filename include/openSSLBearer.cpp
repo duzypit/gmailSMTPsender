@@ -60,18 +60,31 @@ public:
     }
 
 
-    template <typename IsDoneReceivingFunctorType>
-    std::string read (IsDoneReceivingFunctorType isDoneReceiving)
+    //template <typename IsDoneReceivingFunctorType>
+    std::string read (/*IsDoneReceivingFunctorType isDoneReceiving*/)
     {
         char buf[readBufSize];
         std::string read;
+        bool waitForRead;
         while (true)
         {
+            waitForRead = false;
 	        const int rstRead = SSL_read (ssl_.get(), buf, readBufSize);
-	        if (rstRead == 0) throw std::runtime_error("Connection lost while read.");
-	        if (rstRead < 0 && SSL_ERROR_WANT_READ == SSL_get_error(ssl_.get(), rstRead)) continue;
+	        if (rstRead == 0)
+            {
+                throw std::runtime_error("OpenSSLBearer: Connection lost while read.");
+                //std::cout << "openSSLBearer: connection lost whie read." <<std::endl;
+            }
+
+            //wait for the socket to be readable, then call this fucn again
+	        if (rstRead < 0 && SSL_ERROR_WANT_READ == SSL_get_error(ssl_.get(), rstRead))
+            {
+                waitForRead = true;
+                continue;
+            }
+
 	        read += std::string(buf, buf + rstRead);
-        	if (isDoneReceiving (read)) return read;
+        	if (!waitForRead) return read;
         }
     }
 
