@@ -16,7 +16,7 @@ public:
     OpenSSLBearer(int socket, const SSL_METHOD *method = SSLv23_method() ) : ctx_ (nullptr, SSL_CTX_free), ssl_ (nullptr, SSL_free)
     {
         initialize();
-        std::cout << "OpenSSLBearer initialized" << std::endl;
+       // std::cout << "OpenSSLBearer initialized" << std::endl;
         char errorBuf[errorBufSize];
         // Then an SSL CTX object is created as a framwork to establish TLS/SSL enabled connections.
         ctx_ = decltype(ctx_) (SSL_CTX_new(method), SSL_CTX_free);
