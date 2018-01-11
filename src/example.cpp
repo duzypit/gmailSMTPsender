@@ -26,22 +26,20 @@ int main ()
     std::string recipient;
     std::cin >> recipient;
 
-    // This needs to be called only once.
-    // Don't let multi-threads run it several times.
-//    MyOpenSSL::StaticInitialize ssInitializer;
-
-    // For gmail application specific password, check out help pages:
-    // https://support.google.com/accounts/answer/185833
-    // https://security.google.com/settings/security/apppasswords
     SMTPSender sender;
-    sender.sendSSL (
-        uname, // userName
-        password, // password
-        from, // from
-        recipient, // to
-        "Testing Boost STMP", // subject
-        "This message body" // message
-    );
+    if (sender.verifyCreditenials(uname, password)){
+        sender.sendSSL (
+            uname, // userName
+            password, // password
+            from, // from
+            recipient, // to
+            "Testing Boost STMP", // subject
+            "This message body" // message
+        );
+    } else
+    {
+        std::cout << "Login or password is not valid! Quit." << std::endl;
+    }
     return 0;
 }
 
