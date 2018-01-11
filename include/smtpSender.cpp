@@ -202,7 +202,7 @@ private:
     void fillReplyCodes()
     {
         _smtpReplyCodes = {
-            {200,	"(nonstandard success response, see rfc876)"},
+            {200,	"Nonstandard success response"},
             {211,	"System status, or system help reply"},
             {214,	"Help message"},
             {220,	"<domain> Service ready"},
@@ -221,8 +221,8 @@ private:
             {503,	"Bad sequence of commands"},
             {504,	"Command parameter not implemented"},
             {521,	"<domain> does not accept mail (see rfc1846)"},
-            {530,	"Access denied (???a Sendmailism)"},
-            //{535,   "Username and password not accepted"},
+            {530,	"Access denied"},
+            {535,   "Username and password not accepted"},
             {550,	"Requested action not taken: mailbox unavailable"},
             {551,	"User not local; please try <forward-path>"},
             {552,	"Requested mail action aborted: exceeded storage allocation"},
