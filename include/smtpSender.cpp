@@ -1,5 +1,5 @@
-#ifndef __MYSMTP_CPP__
-#define  __MYSMTP_CPP__
+#ifndef __SMTPSENDER_CPP__
+#define __SMTPSENDER_CPP__
 #include "openSSLBearer.cpp"
 #include <iostream>
 #include <string>
@@ -11,128 +11,196 @@
 class SMTPSender
 {
 public:
-    SMTPSender() : newline("\r\n"),  _server("smtp.gmail.com"), _port(465){
+    SMTPSender() : newline("\r\n"),  _server("smtp.gmail.com"), _port(465), socket(_server, _port), openSSL(socket.GetSocket()->nativeHandle())
+    {
         fillReplyCodes();
     }
 
-    void verifyCreditenials(const std::string& userName, const std::string& password)
+    bool verifyCreditenials(const std::string& userName, const std::string& password)
     {
-        SMTPSocket socket(_server, _port);
-        OpenSSLBearer openSSL(socket.GetSocket()->nativeHandle());
-/*
-        std::cout << openSSL.read(ReceiveFunctor(220));// 220 mx. google.com ESMTP
+        std::string msg;
+        bool success = false;
+        //220 mx. google.com ESMTP
+        msg = openSSL.read();
+        if (!validReturnMsg(220, msg))
+        {
+            SMTPReply(220, msg);
+        }
 
         openSSL.write(std::string("EHLO ") + _server + newline);
-        std::cout << openSSL.read(ReceiveFunctor(250));	// 250-mx.google.com at your service,
+
+        //250-mx.google.com at your service,
+        msg = openSSL.read();
+        if (!validReturnMsg(250, msg))
+        {
+            SMTPReply(250, msg);
+        }
 
         openSSL.write (std::string("AUTH LOGIN") + newline);
-        std::cout << openSSL.read(ReceiveFunctor(334)); // 334
+
+        //334
+        msg = openSSL.read();
+        if (!validReturnMsg(334, msg))
+        {
+            SMTPReply(334, msg);
+        }
 
         openSSL.write(EncodeBase64(userName) + newline);
-        std::cout << openSSL.read(ReceiveFunctor(334)); // 334
+        //334
+        msg = openSSL.read();
+        if (!validReturnMsg(334, msg))
+        {
+            SMTPReply(334, msg);
+        }
 
         openSSL.write(EncodeBase64(password) + newline);
-        std::cout << openSSL.read(ReceiveFunctor(235)); // 235 2.7.0 Accepted // 535 not accepted
+
+        //235 2.7.0 Accepted // 535 not accepted
+        msg = openSSL.read();
+        if (!validReturnMsg(235, msg))
+        {
+            SMTPReply(235, msg);
+        } else
+        {
+            success = true;
+        }
 
         openSSL.write(std::string("QUIT") + newline);
-        std::cout << openSSL.read(ReceiveFunctor (221));	// 22l 2.0.0 closing connection
-*/
 
+        //22l 2.0.0 closing connectioni
+        msg = openSSL.read();
+        if (validReturnMsg(221, msg))
+        {
+            SMTPReply(221, msg);
+        }
+        return success;
     }
 
     void sendSSL (const std::string& userName, const std::string& password, const std::string& from, const std::string& to, const std::string& subject, const std::string& message)
     {
-        SMTPSocket socket(_server, _port);
-        OpenSSLBearer openSSL(socket.GetSocket()->nativeHandle());
         std::string msg;
 
+        //220 mx. google.com ESMTP
         msg = openSSL.read();
-        if (validReturnMsg(220, msg)) {
-            std::cout << msg << std::endl;
+        if (!validReturnMsg(220, msg))
+        {
+            SMTPReply(220, msg);
         }
-
-        //std::cout << openSSL.read(ReceiveFunctor(220));// 220 mx. google.com ESMTP
 
         openSSL.write(std::string("EHLO ") + _server + newline);
-        //std::cout << openSSL.read(ReceiveFunctor(250));	// 250-mx.google.com at your service,
+
+        //250-mx.google.com at your service,
         msg = openSSL.read();
-        if (validReturnMsg(250, msg)) {
-            std::cout << msg << std::endl;
+        if (!validReturnMsg(250, msg))
+        {
+            SMTPReply(250, msg);
         }
-        //std::cout << "missing msg: " << std::endl;
-        //std::cout << msg <<std::endl;
 
         openSSL.write (std::string("AUTH LOGIN") + newline);
-        //std::cout << openSSL.read(ReceiveFunctor(334)); // 334
+
+        //334
         msg = openSSL.read();
-        if (validReturnMsg(334, msg)) {
-            std::cout << msg << std::endl;
+        if (!validReturnMsg(334, msg))
+        {
+            SMTPReply(334, msg);
         }
 
         openSSL.write(EncodeBase64(userName) + newline);
-        //std::cout << openSSL.read(ReceiveFunctor(334)); // 334
+        //334
         msg = openSSL.read();
-        if (validReturnMsg(334, msg)) {
-            std::cout << msg << std::endl;
+        if (!validReturnMsg(334, msg))
+        {
+            SMTPReply(334, msg);
         }
 
         openSSL.write(EncodeBase64(password) + newline);
-        //std::cout << openSSL.read(ReceiveFunctor(235)); // 235 2.7.0 Accepted // 535 not accepted
+
+        //235 2.7.0 Accepted // 535 not accepted
         msg = openSSL.read();
-        if (validReturnMsg(235, msg)) {
-            std::cout << msg << std::endl;
+        if (!validReturnMsg(235, msg))
+        {
+            SMTPReply(235, msg);
         }
 
         openSSL.write(std::string("MAIL FROM: <") + from + " >" + newline);
-        //std::cout << openSSL.read(ReceiveFunctor (250));	// 250 2.1.0 0K
+
+        //250 2.1.0 0K
         msg = openSSL.read();
-        if (validReturnMsg(250, msg)) {
-            std::cout << msg << std::endl;
+        if (!validReturnMsg(250, msg))
+        {
+            SMTPReply(250, msg);
         }
 
         openSSL.write (std::string("RCPT To:<") + to + ">" + newline);
-        //std::cout << openSSL.read (ReceiveFunctor (250)); // 250 2.1.5 0K
+
+        //250 2.1.5 0K
         msg = openSSL.read();
-        if (validReturnMsg(250, msg)) {
-            std::cout << msg << std::endl;
+        if (!validReturnMsg(250, msg))
+        {
+            SMTPReply(250, msg);
         }
 
         openSSL.write(std::string("DATA") + newline);
-        //std::cout << openSSL.read(ReceiveFunctor(354)); // 354 Go ahead
+
+        //354 Go ahead
         msg = openSSL.read();
-        if (validReturnMsg(354, msg)) {
-            std::cout << msg << std::endl;
+        if (!validReturnMsg(354, msg))
+        {
+            SMTPReply(354, msg);
         }
 
         openSSL.write(std::string("From: <") + from + ">" + newline);
         openSSL.write(std::string("To: <") + to + ">" + newline);
         openSSL.write(std::string("SUBJECT: ") + subject + newline);
         openSSL.write(newline + message + newline + "." + newline);
+
+        //250 2.0.0 OK
         msg = openSSL.read();
-        if (validReturnMsg(250, msg)) {
-            std::cout << msg << std::endl;
+        if (!validReturnMsg(250, msg))
+        {
+            SMTPReply(250, msg);
         }
 
-        //std::cout << openSSL.read(ReceiveFunctor(250)) << std::endl; // 250 2.0.0 OK
+
         openSSL.write(std::string("QUIT") + newline);
-        //std::cout << openSSL.read(ReceiveFunctor (221));	// 22l 2.0.0 closing connectioni
+
+        //22l 2.0.0 closing connectioni
         msg = openSSL.read();
-        if (validReturnMsg(221, msg)) {
-            std::cout << msg << std::endl;
+        if (validReturnMsg(221, msg))
+        {
+            SMTPReply(221, msg);
         }
 
     }
 
 private:
+
     std::string newline;
     std::string _server;    // server address
     int _port;              // server port
+
+    SMTPSocket socket;
+    OpenSSLBearer openSSL;
+
     std::map<int, std::string> _smtpReplyCodes;
+
+    void SMTPReply(const int& code, const std::string msg, bool visible = true)
+    {
+        if (visible)
+        {
+            int recCode = std::stoi(msg.substr(0,3));
+            auto recCodeMsg = _smtpReplyCodes.find(recCode);
+            if(recCodeMsg == _smtpReplyCodes.end()){
+                std::cout << "smtpsender: unknown code: " << recCode << std::endl;
+            } else {
+                std::cout << "smtpSender: code should be: " << code << ", is: " << recCode << ", msg:  " << recCodeMsg->second << std::endl;
+            }
+
+        }
+    }
 
     void fillReplyCodes()
     {
-//        std::map<int, std::string> m i
-
         _smtpReplyCodes = {
             {200,	"(nonstandard success response, see rfc876)"},
             {211,	"System status, or system help reply"},
@@ -154,6 +222,7 @@ private:
             {504,	"Command parameter not implemented"},
             {521,	"<domain> does not accept mail (see rfc1846)"},
             {530,	"Access denied (???a Sendmailism)"},
+            //{535,   "Username and password not accepted"},
             {550,	"Requested action not taken: mailbox unavailable"},
             {551,	"User not local; please try <forward-path>"},
             {552,	"Requested mail action aborted: exceeded storage allocation"},
@@ -193,38 +262,6 @@ private:
         return false;
     }
 
-    /*struct ReceiveFunctor
-    {
-        enum { codeLength = 3 };
-        const std::string code;
-
-        ReceiveFunctor(int expectedCode) : code(std::to_string(expectedCode))
-        {
-            if (code.length() != codeLength) throw std::runtime_error ("smtpSender: SMTP code must be three-digits.");
-		}
-
-        // return true if msg contains expected code and there is a newline character following.
-        // return false if msg didn' t contatin the newline character yet; we need to receive more.
-        // throw if msg doesn 't contain the expected code.
-
-        bool operator()(const std::string &msg) const
-        {
-            if (msg.length() < codeLength) return false;
-
-            if (code != msg.substr(0, codeLength)) throw std::runtime_error ("smtpSender: SMTP code was not received.");
-            *if(!_smtpReplyCodes.find(msg.substr(0, codeLength)))
-            {
-                throw std::runtime_error ("smtpSender: SMTP code was not received.");
-            }*/
-/*            const size_t posNewline = msg.find_first_of("\n", codeLength);
-
-            if (posNewline == std::string::npos) return false;
-            if (msg.at(codeLength) == ' ') return true;
-            if (msg.at(codeLength) == '-') return this->operator()(msg.substr(posNewline + 1));
-            throw std::runtime_error ("smtpSender: Unexpected return code recieved.");
-		}
-    };
-*/
 	static std::string EncodeBase64 (const std::string& data)
     {
 
